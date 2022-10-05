@@ -1,15 +1,19 @@
 
-class TheAnswerIsNot200Error(Exception):
-    """Ответ сервера не равен 200."""
+class InvalidHttpStatus(Exception):
+    """Статут ответа от API Яндекс.Практикума отличный от 200."""
+
+    pass
 
 
-class EmptyDictionaryOrListError(Exception):
-    """Пустой словарь или список."""
+class UnknownHomeworkStatus(Exception):
+    """Неизвестный статус домашнего задания."""
+
+    pass
 
 
-class UndocumentedStatusError(Exception):
-    """Недокументированный статус."""
+class KeyHomeworkStatusIsInaccessible(Exception):
+    """В ответе API Яндекс.Практикума в словаре 'homeworks'.
+    отсутствует ключ 'status'.
+    """
 
-
-class RequestExceptionError(Exception):
-    """Ошибка запроса."""
+    pass

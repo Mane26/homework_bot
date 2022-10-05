@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 import time
@@ -69,80 +68,65 @@ def get_api_answer(current_timestamp):
 
 def check_response(response):
     """Функция проверки корректности ответа API Яндекс.Практикум."""
+    if type(response) is not dict:
+        raise TypeError('Ответ API отличен от словаря')
     try:
-        timestamp = response['current_date']
+        list_works = response['homeworks']
     except KeyError:
-        logging.error(
-            'Ключ current_date в ответе API Яндекс.Практикум отсутствует'
-        )
+        logger.error('Ошибка словаря по ключу homeworks')
+        raise KeyError('Ошибка словаря по ключу homeworks')
     try:
-        homeworks = response['homeworks']
-    except KeyError:
-        logging.error(
-            'Ключ homeworks в ответе API Яндекс.Практикум отсутствует'
-        )
-    if isinstance(timestamp, int) and isinstance(homeworks, list):
-        return homeworks
-    else:
-        raise Exception
+        homework = list_works[0]
+    except IndexError:
+        logger.error('Список домашних работ пуст')
+        raise IndexError('Список домашних работ пуст')
+    return homework
 
 
 def parse_status(homework):
     """Функция, проверяющая статус домашнего задания."""
+    if 'homework_name' not in homework:
+        raise KeyError('Отсутствует ключ "homework_name" в ответе API')
+    if 'status' not in homework:
+        raise Exception('Отсутствует ключ "status" в ответе API')
     homework_name = homework['homework_name']
-    homework_status = homework.get('status')
-    if homework_status is None:
-        raise exceptions.KeyHomeworkStatusIsInaccessible
-    if homework_status in HOMEWORK_STATUSES:
-        verdict = HOMEWORK_STATUSES.get(homework_status)
-        return f'Изменился статус проверки работы "{homework_name}". {verdict}'
-    else:
-        raise exceptions.UnknownHomeworkStatus
+    homework_status = homework['status']
+    if homework_status not in HOMEWORK_STATUSES:
+        raise Exception(f'Неизвестный статус работы: {homework_status}')
+    verdict = HOMEWORK_STATUSES[homework_status]
+    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def check_tokens():
     """Функция проверки наличия токена и чат id телеграмма."""
-    tokens = {
-        'practicum_token': PRACTICUM_TOKEN,
-        'telegram_token': TELEGRAM_TOKEN,
-        'telegram_chat_id': TELEGRAM_CHAT_ID,
-    }
-    for key, value in tokens.items():
-        if value is None:
-            logging.error(f'{key} отсутствует')
-            return False
-    return True
+    if all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
+        return True
 
 
 def main():
-    """Главная функция запуска бота."""
-    if not check_tokens():
-        exit()
+    """Основная логика работы бота."""
     bot = Bot(token=TELEGRAM_TOKEN)
-    now = datetime.datetime.now()
-    send_message(
-        bot,
-        f'Я начал свою работу: {now.strftime("%d-%m-%Y %H:%M")}')
     current_timestamp = int(time.time())
-    tmp_status = 'reviewing'
-    errors = True
+    STATUS = ''
+    ERROR_CACHE_MESSAGE = ''
+    if not check_tokens():
+        logger.critical('Отсутствуют одна или несколько переменных окружения')
+        raise Exception('Отсутствуют одна или несколько переменных окружения')
     while True:
         try:
             response = get_api_answer(current_timestamp)
-            homework = check_response(response)
-            if homework and tmp_status != homework['status']:
-                message = parse_status(homework)
+            current_timestamp = response.get('current_date')
+            message = parse_status(check_response(response))
+            if message != STATUS:
                 send_message(bot, message)
-                tmp_status = homework['status']
-            logger.info(
-                'Изменений нет, ждем 10 минут и проверяем API')
-            time.sleep(RETRY_TIME)
+                STATUS = message
         except Exception as error:
-            message = f'Сбой в работе программы: {error}'
-            if errors:
-                errors = False
-                send_message(bot, message)
-            logger.critical(message)
+            logger.error(error)
+            message_t = str(error)
+            if message_t != ERROR_CACHE_MESSAGE:
+                send_message(bot, message_t)
+                ERROR_CACHE_MESSAGE = message_t
+        finally:
             time.sleep(RETRY_TIME)
 
 
