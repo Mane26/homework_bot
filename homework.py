@@ -109,7 +109,8 @@ def main():
     previous_message = ''
     if not check_tokens():
         logger.critical('Отсутствуют одна или несколько переменных окружения')
-        raise Exception('Отсутствуют одна или несколько переменных окружения').exit()
+        raise Exception(
+            'Отсутствуют одна или несколько переменных окружения').exit()
     while True:
         try:
             response = get_api_answer(current_timestamp)
