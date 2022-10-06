@@ -99,33 +99,27 @@ def parse_status(homework):
 
 def check_tokens():
     """Функция проверки наличия токена и чат id телеграмма."""
-    if all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
-        return True
+    return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
 def main():
     """Основная логика работы бота."""
     bot = Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
-    STATUS = ''
-    ERROR_CACHE_MESSAGE = ''
+    previous_message = ''
     if not check_tokens():
         logger.critical('Отсутствуют одна или несколько переменных окружения')
-        raise Exception('Отсутствуют одна или несколько переменных окружения')
+        raise Exception('Отсутствуют одна или несколько переменных окружения').exit()
     while True:
         try:
             response = get_api_answer(current_timestamp)
             current_timestamp = response.get('current_date')
             message = parse_status(check_response(response))
-            if message != STATUS:
+            if message != previous_message:
                 send_message(bot, message)
-                STATUS = message
+                previous_message = message
         except Exception as error:
             logger.error(error)
-            message_t = str(error)
-            if message_t != ERROR_CACHE_MESSAGE:
-                send_message(bot, message_t)
-                ERROR_CACHE_MESSAGE = message_t
         finally:
             time.sleep(RETRY_TIME)
 
