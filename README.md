@@ -1,4 +1,4 @@
-[# ЯП - Спринт 7 - Проект «API для Yatube». Homework Bot - Бот для проверки статуса домашней работы на код ревью в Яндекс.Практикум](https://github.com/Mane26/api_final_yatube.git)
+[# ЯП - Спринт 7 - Проект «homework_bot». Homework Bot - Бот для проверки статуса домашней работы на код ревью в Яндекс.Практикум](https://github.com/Mane26/api_final_yatube.git)
 
 ### Homework_bot - отслеживание статуса код-ревю Яндекс.Практикум.
 
